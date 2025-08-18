@@ -1,6 +1,24 @@
-# Task 1: 安装 WSL2
+# Task 1: 配置运行环境
 
-对于学习计算机科学的学生来说, Linux 是必修技能. 大多数同学使用 Windows, 好在 WSL2 可以轻松提供 Linux 环境, 无需在硬盘上单独安装系统.
+对于学习计算机科学的学生来说, Linux 是必修技能, 之后我们的评测都会在 Linux 环境下进行. 所以配置一个趁手的 Linux 环境, 不仅能顺利通过我们的测试, 也为之后在计算机领域深入学习打下一个基础.
 
-安装 WSL2 的教程, 可以参阅微软官方链接 [How to install Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install). 在这里, 我们不给出详细的安装过程, 你可以在网上搜寻到很多关于 WSL 的安装教程, 甚至可以使用 AI 辅助你安装, 我们相信这同样也是锻炼你解决问题能力的机会.
+## 注意点
 
+> 如果你现在使用的是 macOS 或者原生运行 Linux, 你可以选择跳过使用 WSL2.
+
+大多数同学使用 Windows, 好在 **WSL2** 可以轻松提供 Linux 环境, 无需在硬盘上单独安装系统. 安装 WSL2 的教程, 可以参阅微软官方链接 [How to install Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install). 在这里, 我们不给出详细的安装过程, 你可以在网上搜寻到很多关于 WSL 的安装教程, 甚至可以使用 AI 辅助你安装, 我们相信这同样也是锻炼你解决问题能力的机会.
+
+我们推荐你安装的发行版是 **Ubuntu**, 这是因为后继的 README 当中有相当一部分都是以 **Debian/Ubuntu**  作为参考, 使用我们推荐的环境可以省去很多麻烦. 当然, **我们也鼓励你尝试使用不同的发行版**.
+
+## 任务
+
+1. 检测你的运行环境 (**50pts**):
+
+    - 如果你运行的是**原生 Linux / macOS**, 你将直接获得 50pts.
+
+    - 如果你运行的是 **WSL**:
+      - **WSL2**: 获得 50pts.
+      - **WSL1**: 获得 25pts.
+
+2. 检测是否安装了 **Git** (**25pts**)
+3. 检测是否安装了 **Python3** (**25pts**)

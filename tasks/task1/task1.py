@@ -174,15 +174,16 @@ def generate_and_save_report():
     with open(report_file_path, "w") as f:
         f.write(encrypted_report)
     
-    print("\n--- SUBMISSION CREATED ---")
+    print("--- SUBMISSION CREATED ---")
     print(f"An encrypted submission file has been saved to {report_file_path}.")
     print("Please submit this file.")
 
 if __name__ == "__main__":
-    print("--- Running Autograder ---")
+    print("\n--- Running Autograder for task1 ---")
     
     run_check('Environment Check', check_environment, TESTS['Environment Check'])
     run_check('Git Check', check_git, TESTS['Git Check'])
     run_check('Python3 Check', check_python3_exists, TESTS['Python3 Check'])
     
+    print_final_report()
     generate_and_save_report()

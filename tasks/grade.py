@@ -25,8 +25,6 @@ def run_task_grader(task_name):
         print(f"Error: Task executable not found for '{task_name}'.")
         print(f"Expected path: {task_script_path}")
         sys.exit(1)
-        
-    print(f"\n--- Running grader for {task_name} ---")
     
     try:
         # Execute the task executable and capture its output
@@ -56,10 +54,10 @@ def main():
         args = sys.argv[1:]
         if args[0] == '-a':
             # Run all tasks if '-a' flag is provided
-            print("Running all tasks...")
+            print("\nRunning all tasks...")
             for task in ALL_TASKS:
                 run_task_grader(task)
-            print("\n--- All tasks completed ---")
+            print("--- ALL TASKS COMPLETED ---\n")
         else:
             # Run multiple specific tasks
             for task_name in args:

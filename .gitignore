@@ -1,5 +1,5 @@
 # Ignore reports
-*/autograding_report.json
+**/autograding_report.json
 
 # Ignore the directory containing the secret key
 etc/

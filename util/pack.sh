@@ -1,41 +1,58 @@
 #!/bin/bash
 
-# 检查是否提供了要打包的文件
 if [ -z "$1" ]; then
     echo "Error: No Python file specified."
-    echo "Usage: ./pack.sh <your_script.py>"
+    echo "Usage: ./pack.sh <path/to/your_script.py>"
     exit 1
 fi
 
-# 检查文件是否存在
 if [ ! -f "$1" ]; then
     echo "Error: File not found: $1"
     exit 1
 fi
 
-# 定义要打包的 Python 文件
 PYTHON_SCRIPT="$1"
-# 定义输出的可执行文件名（去掉.py后缀）
-EXECUTABLE_NAME=$(basename "$PYTHON_SCRIPT" .py)
-# 获取源文件所在的目录
 DEST_DIR=$(dirname "$PYTHON_SCRIPT")
+SCRIPT_BASENAME=$(basename "$PYTHON_SCRIPT")
+EXECUTABLE_NAME=$(basename "$SCRIPT_BASENAME" .py)
 
-echo "Starting to pack $PYTHON_SCRIPT..."
+echo "--> Changing directory to ${DEST_DIR}"
+pushd "$DEST_DIR" > /dev/null
 
-# 使用 PyInstaller 打包
-pyinstaller --onefile "$PYTHON_SCRIPT"
+if [ -f "build_quiz.py" ] && [ -f "questions.qmd" ]; then
+    echo "--> Found quiz components. Generating quiz_data.py..."
+    python3 build_quiz.py --qmd questions.qmd --output quiz_data.py
 
-# 检查 PyInstaller 是否成功
+    if [ $? -ne 0 ]; then
+        echo "✗ Error: build_quiz.py failed. Exiting."
+        popd > /dev/null
+        exit 1
+    fi
+    echo "✓ quiz_data.py generated successfully."
+else
+    echo "--> No quiz components found. Proceeding with standard packing."
+fi
+
+echo "--> Starting to pack ${SCRIPT_BASENAME} with PyInstaller..."
+pyinstaller --onefile --clean --noconfirm "$SCRIPT_BASENAME"
+
 if [ $? -ne 0 ]; then
-    echo "PyInstaller failed. Exiting."
+    echo "✗ Error: PyInstaller failed. Exiting."
+    rm -f quiz_data.py
+    popd > /dev/null
     exit 1
 fi
 
-# 将生成的可执行文件移动到源文件所在的目录
-mv "dist/$EXECUTABLE_NAME" "$DEST_DIR/"
-
-# 清理所有 PyInstaller 生成的临时目录和文件
+echo "--> Cleaning up build artifacts..."
+mv "dist/$EXECUTABLE_NAME" .
 rm -rf dist build *.spec
+if [ -f "quiz_data.py" ]; then
+    echo "--> Cleaning up generated quiz module..."
+    rm quiz_data.py
+fi
 
-echo "Packing completed successfully!"
-echo "Executable saved as $DEST_DIR/$EXECUTABLE_NAME"
+popd > /dev/null
+
+echo "✓ Packing completed successfully!"
+echo "✓ Executable saved as ${DEST_DIR}/${EXECUTABLE_NAME}"
+

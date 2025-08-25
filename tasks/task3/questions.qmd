@@ -1,0 +1,90 @@
+---
+你刚刚通过 `ssh` 登录到一台新的远程服务器，想知道当前所在的绝对路径是什么，应该使用哪个命令？
+A. whereami
+*B. pwd
+C. ls -a
+D. path
+---
+你想查看当前目录下所有文件（包括以 `.` 开头的隐藏文件）的详细列表信息，应该使用哪个命令？
+A. ls
+B. ls -h
+C. list all
+*D. ls -al
+---
+一个日志文件 `app.log` 太长了，你希望可以按页、交互式地查看其内容（可以上下滚动），哪个命令最合适？
+A. page app.log
+*B. less app.log
+C. scroll app.log
+D. cat app.log
+---
+你修改了一个重要的配置文件 `config.toml`，在进行危险操作前，你想创建一个名为 `config.toml.bak` 的备份副本，应该使用哪个命令？
+A. mv config.toml config.toml.bak
+*B. cp config.toml config.toml.bak
+C. duplicate config.toml
+D. backup config.toml
+---
+你创建了一个脚本 `start.sh`，但运行 `./start.sh` 时系统提示 "Permission denied"。你需要给文件的所有者添加执行权限，应该使用哪个命令？
+A. chmod +x start.sh
+B. chown +x start.sh
+*C. chmod u+x start.sh
+D. perm exec start.sh
+---
+为了方便，你想直接将 `start.sh` 的权限设置为 `rwxr-xr-x`（所有者可读写执行，组用户和其他用户可读可执行），使用数字模式的正确命令是什么？
+A. chmod 644 start.sh
+B. chmod 777 start.sh
+*C. chmod 755 start.sh
+D. chmod u=rwx,go=rx start.sh
+---
+你在一个巨大的代码库中，想查找所有文件中包含 `TODO:` 这个字符串的地方，应该使用哪个命令？
+A. find "TODO:" ./*
+*B. grep -r "TODO:" .
+C. search "TODO:" ./*
+D. cat * | find "TODO:"
+---
+你的朋友给了你一个名为 `report.txt` 的文件，但你忘了里面是什么内容。你想在终端快速查看其全部文本内容，应该使用哪个命令？
+A. open report.txt
+B. view report.txt
+*C. cat report.txt
+D. display report.txt
+---
+你正在寻找一个名为 `user_settings.json` 的配置文件，但不确定它具体在哪。你想从当前目录 `.` 开始递归搜索找到它，应该使用哪个命令？
+A. grep user_settings.json .
+*B. find . -name "user_settings.json"
+C. locate user_settings.json
+D. search . -file "user_settings.json"
+---
+你发现 `/var/log` 目录占用了大量空间，想知道这个目录下每个子目录具体占用了多大空间，以便找到问题所在，应该使用哪个命令？
+A. df -h /var/log
+B. ls -lh /var/log
+C. size /var/log/*
+*D. du -sh /var/log/*
+---
+你运行了一个后台服务，使用 `ps aux` 查到它的进程ID (PID) 是 12345。哪个命令可以用来正常地终止这个进程？
+A. stop 12345
+B. delete 12345
+*C. kill 12345
+D. end 12345
+---
+你正在实时监控一个日志文件 `/var/log/app.log` 的输出，希望所有新增加的日志都能自动显示在终端上，应该使用哪个命令？
+A. cat -f /var/log/app.log
+B. watch /var/log/app.log
+C. head -f /var/log/app.log
+*D. tail -f /var/log/app.log
+---
+你想连接到地址为 `server.example.com` 的远程服务器，用户名为 `user`，但 SSH 服务运行在一个非标准的端口 `2222` 上，应该使用哪个命令？
+A. ssh user@server.example.com --port 2222
+B. ssh user@server.example.com:2222
+*C. ssh -p 2222 user@server.example.com
+D. ssh connect user@server.example.com -port 2222
+---
+你想从远程服务器 `server.example.com` 的 `/remote/path/data.zip` 下载文件到本地当前目录，应该使用哪个命令？
+A. rsync user@server.example.com:/remote/path/data.zip .
+*B. scp user@server.example.com:/remote/path/data.zip .
+C. ftp user@server.example.com:/remote/path/data.zip .
+D. download user@server.example.com:/remote/path/data.zip .
+---
+你在下载一个大型文件，但网络连接不稳定，你希望下载中断后可以继续，而不是从头开始。哪个命令最适合这个任务？
+A. scp --resume
+B. ftp -c
+*C. wget -c 
+D. curl

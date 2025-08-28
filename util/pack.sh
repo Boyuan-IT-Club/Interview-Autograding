@@ -23,7 +23,6 @@ pushd "$DEST_DIR" > /dev/null
 if [ -f "build_quiz.py" ] && [ -f "questions.qmd" ]; then
     echo "--> Found quiz components. Generating quiz_data.py..."
     python3 build_quiz.py --qmd questions.qmd --output quiz_data.py
-
     if [ $? -ne 0 ]; then
         echo "✗ Error: build_quiz.py failed. Exiting."
         popd > /dev/null
@@ -35,8 +34,13 @@ else
 fi
 
 echo "--> Starting to pack ${SCRIPT_BASENAME} with PyInstaller..."
-# 打包时包含 Crypto 模块，确保依赖完整
-pyinstaller --onefile --clean --noconfirm --hidden-import Crypto "$SCRIPT_BASENAME"
+# 打包时包含 Crypto 所有必要子模块，确保依赖完整
+pyinstaller --onefile --clean --noconfirm \
+    --hidden-import Crypto \
+    --hidden-import Crypto.Cipher \
+    --hidden-import Crypto.Util \
+    --hidden-import Crypto.Random \
+    "$SCRIPT_BASENAME"
 
 if [ $? -ne 0 ]; then
     echo "✗ Error: PyInstaller failed. Exiting."

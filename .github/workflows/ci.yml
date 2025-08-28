@@ -19,9 +19,11 @@ jobs:
       with:
         python-version: '3.11'
 
-    # 3. 安装 PyInstaller
-    - name: Install PyInstaller
-      run: pip install pyinstaller
+    # 3. 安装 PyInstaller 和依赖
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install pyinstaller pycryptodome
 
     # 4. 设置 pack.sh 可执行权限
     - name: Set execute permission for pack.sh
@@ -46,11 +48,8 @@ jobs:
     - name: Determine next version
       id: version
       run: |
-        # fetch 所有远程 tags
         git fetch --tags origin
-
         latest=$(git tag -l "v*" --sort=-v:refname | head -n1)
-
         if [ -z "$latest" ]; then
           version="1.0.0"
         else
@@ -60,7 +59,6 @@ jobs:
           patch=$((patch + 1))
           version="$major.$minor.$patch"
         fi
-
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "Next version: $version"
 
@@ -81,19 +79,17 @@ jobs:
         for task_dir in ./tasks/task*/; do
           task_name=$(basename $task_dir)
           mkdir -p dist/package/$task_name
-
           task_exe=$(find "$task_dir" -maxdepth 1 -type f -executable -name "$task_name*" | head -n1)
           if [ -n "$task_exe" ]; then
             cp "$task_exe" "dist/package/$task_name/"
           fi
-
           find "$task_dir" -maxdepth 1 -type f ! -name "*.py" -exec cp {} "dist/package/$task_name/" \;
         done
 
-        # 给所有可执行文件加权限，避免 Permission denied
+        # 给所有可执行文件加权限
         find dist/package -type f -executable -exec chmod +x {} \;
 
-        # 打包 grade 和 taskN，避免生成多余的 . 文件夹
+        # 打包 grade 和 taskN
         cd dist/package
         tar -cvf ../interview-autograding.tar *
         cd -

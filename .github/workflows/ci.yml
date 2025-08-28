@@ -91,21 +91,6 @@ jobs:
         tar -cvf dist/interview-autograding.tar -C dist/package .
 
     # 9. 创建 GitHub Release（使用 ghcr.io/actions/create-release@latest，body 自动生成）
-    - name: Create GitHub Release
-      id: create_release
-      uses: ghcr.io/actions/create-release@latest
-      with:
-        tag_name: v${{ steps.version.outputs.version }}
-        release_name: Release v${{ steps.version.outputs.version }}
-        body: |
-          Release version v${{ steps.version.outputs.version }}
-          Generated on $(date +"%Y-%m-%d %H:%M:%S")
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    # 10. 上传 tar 文件到 Release
     - name: Create Release with gh CLI
       run: |
         gh release create v${{ steps.version.outputs.version }} \
@@ -114,3 +99,14 @@ jobs:
         --notes "Release version v${{ steps.version.outputs.version}} generated on $(date +"%Y-%m-%d %H:%M:%S")"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # 10. 上传 tar 文件到 Release
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/interview-autograding.tar
+        asset_name: interview-autograding.tar
+        asset_content_type: application/x-tar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

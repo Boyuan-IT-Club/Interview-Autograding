@@ -3,7 +3,7 @@ import subprocess
 import os
 
 # 定义所有任务的列表，你可以根据需要在这里添加或删除任务。
-ALL_TASKS = ['task1']
+ALL_TASKS = ['task1', 'task2', 'task3']
 
 def run_task_grader(task_name):
     """

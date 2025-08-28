@@ -90,10 +90,10 @@ jobs:
         # tar 包内直接是 grade 和 taskN 目录
         tar -cvf dist/interview-autograding.tar -C dist/package .
 
-    # 9. 创建 GitHub Release（自动创建 tag）
+    # 9. 创建 GitHub Release（自动创建 tag + 自动生成 release notes）
     - name: Create GitHub Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: actions/create-release@v2
       with:
         tag_name: v${{ steps.version.outputs.version }}
         release_name: Release v${{ steps.version.outputs.version }}
@@ -102,7 +102,7 @@ jobs:
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+        
     # 10. 上传 tar 文件到 Release
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
@@ -113,3 +113,4 @@ jobs:
         asset_content_type: application/x-tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

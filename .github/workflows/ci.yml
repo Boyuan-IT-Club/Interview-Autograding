@@ -98,7 +98,7 @@ jobs:
         --title "Release v${{ steps.version.outputs.version }}" \
         --notes "Release version v${{ steps.version.outputs.version}} generated on $(date +"%Y-%m-%d %H:%M:%S")"
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.REPO_TOKEN }}
 
     # 10. 上传 tar 文件到 Release
     - name: Upload Release Asset

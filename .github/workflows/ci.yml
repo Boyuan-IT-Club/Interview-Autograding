@@ -42,11 +42,15 @@ jobs:
           fi
         done
 
-    # 7. 生成下一个版本号
+    # 7. 生成下一个版本号（确保自增，不会重复）
     - name: Determine next version
       id: version
       run: |
+        # fetch 所有远程 tags
+        git fetch --tags origin
+
         latest=$(git tag -l "v*" --sort=-v:refname | head -n1)
+
         if [ -z "$latest" ]; then
           version="1.0.0"
         else
@@ -56,6 +60,7 @@ jobs:
           patch=$((patch + 1))
           version="$major.$minor.$patch"
         fi
+
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "Next version: $version"
 

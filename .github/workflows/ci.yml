@@ -77,18 +77,21 @@ jobs:
           task_name=$(basename $task_dir)
           mkdir -p dist/package/$task_name
 
-          # 查找可执行文件（pack.sh 输出）
           task_exe=$(find "$task_dir" -maxdepth 1 -type f -executable -name "$task_name*" | head -n1)
           if [ -n "$task_exe" ]; then
             cp "$task_exe" "dist/package/$task_name/"
           fi
 
-          # 拷贝其他非 .py 文件
           find "$task_dir" -maxdepth 1 -type f ! -name "*.py" -exec cp {} "dist/package/$task_name/" \;
         done
 
-        # tar 包内直接是 grade 和 taskN 目录
-        tar -cvf dist/interview-autograding.tar -C dist/package .
+        # 给所有可执行文件加权限，避免 Permission denied
+        find dist/package -type f -executable -exec chmod +x {} \;
+
+        # 打包 grade 和 taskN，避免生成多余的 . 文件夹
+        cd dist/package
+        tar -cvf ../interview-autograding.tar *
+        cd -
 
     # 9. 创建 GitHub Release
     - name: Create Release with gh CLI

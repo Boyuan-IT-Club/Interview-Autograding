@@ -1,33 +1,37 @@
-name: Auto Compile Tasks
+name: Build and Package Tasks
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
-  build-tasks:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. 检出代码
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # 2. 设置 Python
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
+    # 3. 安装 PyInstaller
     - name: Install PyInstaller
       run: pip install pyinstaller
 
+    # 4. 设置 pack.sh 可执行权限
     - name: Set execute permission for pack.sh
       run: chmod +x ./util/pack.sh
 
+    # 5. 编译 grade.py
     - name: Compile grade.py
       run: ./util/pack.sh ./tasks/grade.py
 
+    # 6. 编译 taskN 脚本
     - name: Compile taskN scripts
       run: |
         for task_dir in ./tasks/task*/; do
@@ -35,7 +39,84 @@ jobs:
           if [ -f "$task_file" ]; then
             echo "Packing $task_file..."
             ./util/pack.sh "$task_file"
-          else
-            echo "No main Python file found in $task_dir"
           fi
         done
+
+    # 7. 生成下一个版本号
+    - name: Determine next version
+      id: version
+      run: |
+        latest=$(git tag -l "v*" --sort=-v:refname | head -n1)
+        if [ -z "$latest" ]; then
+          version="1.0.0"
+        else
+          major=$(echo $latest | cut -d. -f1 | tr -d 'v')
+          minor=$(echo $latest | cut -d. -f2)
+          patch=$(echo $latest | cut -d. -f3)
+          patch=$((patch + 1))
+          version="$major.$minor.$patch"
+        fi
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "Next version: $version"
+
+    # 8. 创建 Git tag
+    - name: Create Git tag
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+        git push origin "v${{ steps.version.outputs.version }}"
+
+    # 9. 准备 tar 包（自动识别可执行文件）
+    - name: Prepare tar package
+      run: |
+        mkdir -p dist/package
+
+        # 拷贝 grade 可执行文件
+        grade_output=$(find ./tasks -maxdepth 1 -type f -executable -name "grade*" | head -n1)
+        if [ -z "$grade_output" ]; then
+          echo "Error: grade executable not found!"
+          exit 1
+        fi
+        cp "$grade_output" dist/package/
+
+        # 遍历 taskN 目录
+        for task_dir in ./tasks/task*/; do
+          task_name=$(basename $task_dir)
+          mkdir -p dist/package/$task_name
+
+          # 查找可执行文件（pack.sh 输出）
+          task_exe=$(find "$task_dir" -maxdepth 1 -type f -executable -name "$task_name*" | head -n1)
+          if [ -n "$task_exe" ]; then
+            cp "$task_exe" "dist/package/$task_name/"
+          fi
+
+          # 拷贝其他非 .py 文件（如 README.md 等）
+          find "$task_dir" -maxdepth 1 -type f ! -name "*.py" -exec cp {} "dist/package/$task_name/" \;
+        done
+
+        # tar 包内直接是 grade 和 taskN 目录
+        tar -cvf dist/interview-autograding.tar -C dist/package .
+
+    # 10. 创建 GitHub Release
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: Release v${{ steps.version.outputs.version }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # 11. 上传 tar 文件到 Release
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/interview-autograding.tar
+        asset_name: interview-autograding.tar
+        asset_content_type: application/x-tar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

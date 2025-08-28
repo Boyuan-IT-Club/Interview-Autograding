@@ -22,7 +22,7 @@ jobs:
     # 3. 安装 PyInstaller 和依赖
     - name: Install Python dependencies
       run: |
-        pip install --upgrade pip
+        python -m pip install --upgrade pip
         pip install pyinstaller pycryptodome
 
     # 4. 设置 pack.sh 可执行权限

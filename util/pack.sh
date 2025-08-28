@@ -34,13 +34,10 @@ else
 fi
 
 echo "--> Starting to pack ${SCRIPT_BASENAME} with PyInstaller..."
-# 打包时包含 Crypto 所有必要子模块，确保依赖完整
-pyinstaller --onefile --clean --noconfirm \
-    --hidden-import Crypto \
-    --hidden-import Crypto.Cipher \
-    --hidden-import Crypto.Util \
-    --hidden-import Crypto.Random \
-    "$SCRIPT_BASENAME"
+# 生成 Crypto 所有子模块的 hidden-import 参数
+hidden_imports=$(python3 -c "import Crypto; import pkgutil; print(' '.join(['--hidden-import=' + name for _, name, _ in pkgutil.walk_packages(Crypto.__path__)]))")
+
+pyinstaller --onefile --clean --noconfirm $hidden_imports "$SCRIPT_BASENAME"
 
 if [ $? -ne 0 ]; then
     echo "✗ Error: PyInstaller failed. Exiting."

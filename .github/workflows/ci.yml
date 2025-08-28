@@ -106,12 +106,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # 10. 上传 tar 文件到 Release
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/interview-autograding.tar
-        asset_name: interview-autograding.tar
-        asset_content_type: application/x-tar
+    - name: Create Release with gh CLI
+      run: |
+        gh release create v${{ steps.version.outputs.version }} \
+        dist/interview-autograding.tar \
+        --title "Release v${{ steps.version.outputs.version }}" \
+        --notes "Release version v${{ steps.version.outputs.version}} generated on $(date +"%Y-%m-%d %H:%M:%S")"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

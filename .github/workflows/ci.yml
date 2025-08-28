@@ -62,33 +62,22 @@ jobs:
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "Next version: $version"
 
-    # 8. 准备 tar 包（自动识别可执行文件 + 打包 etc 文件夹）
+    # 8. 准备 tar 包（保留 tasks 和 etc 同级，排除 .py 文件）
     - name: Prepare tar package
       run: |
         # 确保目标目录存在
         mkdir -p dist/package
 
-        # 拷贝 grade 可执行文件
-        grade_output=$(find ./tasks -maxdepth 1 -type f -executable -name "grade*" | head -n1)
-        if [ -z "$grade_output" ]; then
-          echo "Error: grade executable not found!"
+        # 拷贝整个 tasks 文件夹
+        if [ -d "./tasks" ]; then
+          mkdir -p dist/package/tasks
+          rsync -av --exclude='*.py' ./tasks/ dist/package/tasks/
+        else
+          echo "Error: ./tasks folder not found!"
           exit 1
         fi
-        cp "$grade_output" dist/package/
 
-        # 遍历 taskN 目录
-        for task_dir in ./tasks/task*/; do
-          task_name=$(basename $task_dir)
-          mkdir -p dist/package/$task_name
-          task_exe=$(find "$task_dir" -maxdepth 1 -type f -executable -name "$task_name*" | head -n1)
-          if [ -n "$task_exe" ]; then
-            cp "$task_exe" "dist/package/$task_name/"
-          fi
-          # 拷贝非 .py 文件
-          find "$task_dir" -maxdepth 1 -type f ! -name "*.py" -exec cp {} "dist/package/$task_name/" \;
-        done
-
-        # 拷贝 etc 文件夹（包含密钥）
+        # 拷贝整个 etc 文件夹
         if [ -d "./etc" ]; then
           cp -r ./etc dist/package/
         else

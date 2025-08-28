@@ -1,0 +1,34 @@
+# .github/workflows/ci.yml
+name: Auto Compile Tasks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-tasks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set execute permission for pack.sh
+      run: chmod +x ./util/pack.sh
+
+    - name: Compile grade.py
+      run: ./util/pack.sh ./tasks/grade.py
+
+    - name: Compile taskN scripts
+      run: |
+        for task_dir in ./tasks/task*/; do
+          task_file="${task_dir%/}/$(basename ${task_dir%/}).py"
+          if [ -f "$task_file" ]; then
+            echo "Packing $task_file..."
+            ./util/pack.sh "$task_file"
+          else
+            echo "No main Python file found in $task_dir"
+          fi
+        done

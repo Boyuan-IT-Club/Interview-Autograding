@@ -1,8 +1,5 @@
 # Ignore reports
 **/autograding_report.json
 
-# Ignore the directory containing the secret key
-etc/
-
 # 忽略二进制可执行文件
 task[0-9]*

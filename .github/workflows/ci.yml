@@ -62,9 +62,10 @@ jobs:
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "Next version: $version"
 
-    # 8. 准备 tar 包（自动识别可执行文件）
+    # 8. 准备 tar 包（自动识别可执行文件 + 打包 etc 文件夹）
     - name: Prepare tar package
       run: |
+        # 确保目标目录存在
         mkdir -p dist/package
 
         # 拷贝 grade 可执行文件
@@ -83,13 +84,21 @@ jobs:
           if [ -n "$task_exe" ]; then
             cp "$task_exe" "dist/package/$task_name/"
           fi
+          # 拷贝非 .py 文件
           find "$task_dir" -maxdepth 1 -type f ! -name "*.py" -exec cp {} "dist/package/$task_name/" \;
         done
+
+        # 拷贝 etc 文件夹（包含密钥）
+        if [ -d "./etc" ]; then
+          cp -r ./etc dist/package/
+        else
+          echo "Warning: ./etc folder not found. Skipping."
+        fi
 
         # 给所有可执行文件加权限
         find dist/package -type f -executable -exec chmod +x {} \;
 
-        # 打包 grade 和 taskN
+        # 打包 tasks 和 etc
         cd dist/package
         tar -cvf ../interview-autograding.tar *
         cd -

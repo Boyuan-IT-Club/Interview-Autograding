@@ -59,15 +59,7 @@ jobs:
         echo "version=$version" >> $GITHUB_OUTPUT
         echo "Next version: $version"
 
-    # 8. 创建 Git tag
-    - name: Create Git tag
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-        git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-        git push origin "v${{ steps.version.outputs.version }}"
-
-    # 9. 准备 tar 包（自动识别可执行文件）
+    # 8. 准备 tar 包（自动识别可执行文件）
     - name: Prepare tar package
       run: |
         mkdir -p dist/package
@@ -91,14 +83,14 @@ jobs:
             cp "$task_exe" "dist/package/$task_name/"
           fi
 
-          # 拷贝其他非 .py 文件（如 README.md 等）
+          # 拷贝其他非 .py 文件
           find "$task_dir" -maxdepth 1 -type f ! -name "*.py" -exec cp {} "dist/package/$task_name/" \;
         done
 
         # tar 包内直接是 grade 和 taskN 目录
         tar -cvf dist/interview-autograding.tar -C dist/package .
 
-    # 10. 创建 GitHub Release
+    # 9. 创建 GitHub Release（自动创建 tag）
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
@@ -107,10 +99,11 @@ jobs:
         release_name: Release v${{ steps.version.outputs.version }}
         draft: false
         prerelease: false
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 11. 上传 tar 文件到 Release
+    # 10. 上传 tar 文件到 Release
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       with:

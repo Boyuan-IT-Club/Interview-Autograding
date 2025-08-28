@@ -1,4 +1,3 @@
-# .github/workflows/ci.yml
 name: Auto Compile Tasks
 
 on:
@@ -14,6 +13,14 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install PyInstaller
+      run: pip install pyinstaller
 
     - name: Set execute permission for pack.sh
       run: chmod +x ./util/pack.sh

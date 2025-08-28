@@ -35,7 +35,7 @@ else
 fi
 
 echo "--> Starting to pack ${SCRIPT_BASENAME} with PyInstaller..."
-# 加上 --hidden-import Crypto，保证依赖被包含
+# 打包时包含 Crypto 模块，确保依赖完整
 pyinstaller --onefile --clean --noconfirm --hidden-import Crypto "$SCRIPT_BASENAME"
 
 if [ $? -ne 0 ]; then
@@ -45,11 +45,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "--> Cleaning up build artifacts..."
+echo "--> Moving executable and setting permissions..."
 mv "dist/$EXECUTABLE_NAME" .
-# 给可执行文件加权限
 chmod +x "$EXECUTABLE_NAME"
 
+echo "--> Cleaning up build artifacts..."
 rm -rf dist build *.spec
 if [ -f "quiz_data.py" ]; then
     echo "--> Cleaning up generated quiz module..."

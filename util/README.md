@@ -38,7 +38,7 @@
 
 **语法：**
 
-````bash
+```bash
 ./pack.sh \<your\_script.py\>
 ```
 

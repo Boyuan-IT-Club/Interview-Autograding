@@ -1,0 +1,67 @@
+# 你需要完成的任务由 ``TODO:'' 开头
+# 你可以用 ``grep -rn "TODO"'' 快速找到它们
+
+# 无需修改以下内容
+TOOL_DIR := tool
+TOOL_IMAGE_NAME := ai-remover
+INPUT_DIR := input_images
+OUTPUT_DIR := output_images
+ZIP_FILE := processed_images.zip
+INPUT_FILES := $(shell find $(INPUT_DIR) -name '*.jpg')
+OUTPUT_FILES := $(patsubst $(INPUT_DIR)/%.jpg,$(OUTPUT_DIR)/%.png,$(INPUT_FILES))
+
+# 标记文件
+DOCKER_BUILD_MARKER := .docker_image_built
+
+.PHONY: all clean process package build shell
+
+all: # TODO: 设置 `package' 为默认目标，这样输入 `make` 就可以完成最终的打包任务
+
+# 卡住了？try: `man zip`
+# 注意不要把输出目录一起打包进去，不然会:
+# Expected in zip: ['foo.png', 'bar.png']
+# Found in zip:    ['foo.png', 'bar.png', 'output_images']
+package: $(ZIP_FILE)
+	@echo "压缩包已生成在 $(ZIP_FILE)"
+
+$(ZIP_FILE): $(OUTPUT_FILES)
+	@echo "TODO: 在这里实现压缩包创建命令"
+
+# `process' 无需修改
+process: $(OUTPUT_FILES)
+	@echo "图片都已处理完毕"
+
+# TODO: 实现具体的清理逻辑
+# 你需要删除:
+# - 输出目录与其中的文件
+# - 最终的压缩包
+# - `.docker_image_built' 这个标记文件
+# 卡住了？try: `man rm`
+clean:
+	@echo "清理完成"
+
+build: $(DOCKER_BUILD_MARKER)
+
+$(DOCKER_BUILD_MARKER): $(TOOL_DIR)/Dockerfile $(TOOL_DIR)/main.py $(TOOL_DIR)/requirements.txt
+	@docker build -t $(TOOL_IMAGE_NAME) $(TOOL_DIR)
+	@touch $(DOCKER_BUILD_MARKER)
+
+# TODO: 图片处理的模式规则
+# 在下方编写 `docker run' 命令来调用图像处理工具进行处理
+# - docker run --rm
+# - 将当前目录挂载到容器的 `/app` 目录: `-v "$(shell pwd):/app"`
+# - 定义环境变量: `-e U2NET_HOME=.....`，指向容器中的 `models' 文件夹
+# - 指定使用的镜像: `$(TOOL_IMAGE_NAME)`
+# - 调用脚本，并指定 python 脚本的输入输出参数: `--input "/app/$<" --output "/app/$@"`
+$(OUTPUT_DIR)/%.png: $(INPUT_DIR)/%.jpg $(DOCKER_BUILD_MARKER)
+	@echo "正在处理 $< -> $@ "
+	# 确保输出目录存在
+	@mkdir -p $(dir $@)
+	# @docker run --rm \
+
+# 如果你在使用 Docker 时遇到问题，可以用 `make shell` 进入容器的终端进行调试
+shell: $(DOCKER_BUILD_MARKER)
+	@docker run --rm -it \
+		-v "$(shell pwd):/app" \
+		--entrypoint /bin/bash \
+		$(TOOL_IMAGE_NAME)

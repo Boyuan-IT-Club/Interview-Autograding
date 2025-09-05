@@ -27,8 +27,13 @@ results = []
 final_score = 0
 CONTAINER_NAME = "autograding-task3"
 
+config_path = ""
 try:
-    app_dir = os.path.dirname(os.path.realpath(sys.executable))
+    if getattr(sys, 'frozen', False):
+        app_dir = os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+
     project_root = os.path.dirname(os.path.dirname(app_dir))
     config_path = os.path.join(project_root, 'etc', 'config')
     with open(config_path, 'r') as f:
@@ -36,16 +41,36 @@ try:
     if len(SECRET_KEY) not in [16, 24, 32]:
         raise ValueError("Incorrect AES key length from config file.")
 except Exception as e:
-    print(f"Error loading secret key: {e}")
+    print(f"Error loading secret key from '{config_path}': {e}")
     sys.exit(1)
+
+def check_test(name, passed, points):
+    global final_score
+    status = "✓ Passed" if passed else "✗ Failed"
+    print(f"{status}: {name}")
+    if passed:
+        final_score += points
+
+    results.append({
+        "name": name,
+        "passed": passed,
+        "points": points
+    })
 
 def print_final_report():
     print("\n--- AUTOGRADING FINAL REPORT ---")
     print("Results for Linux Challenge:")
     for result in results:
         status = '✓ Passed' if result.get('passed', False) else '✗ Failed'
-        points_str = f"+{result.get('points', 0)}pts"
+
+        if 'earned_score' in result:
+            earned_points = result['earned_score']
+        else:
+            earned_points = result.get('points', 0) if result.get('passed', False) else 0
+
+        points_str = f"+{earned_points}pts"
         print(f"  - {result['name']}: {status} ({points_str})")
+
     print(f"\nFinal Score: {final_score}/{TOTAL_MAX_SCORE} (Correctness)")
     print("----------------------------------\n")
 
@@ -70,9 +95,9 @@ def start_container():
         status_proc = subprocess.run(inspect_cmd, capture_output=True, text=True)
 
         if status_proc.returncode != 0:
-             print(f"✗ Error: Container '{CONTAINER_NAME}' not found.")
-             print("   Please complete Part 1 of the task first by running 'docker run...'.")
-             return False
+            print(f"✗ Error: Container '{CONTAINER_NAME}' not found.")
+            print("    Please complete Part 1 of the task first by running 'docker run...'.")
+            return False
 
         status = status_proc.stdout.strip()
         if status == 'exited':
@@ -90,44 +115,22 @@ def start_container():
         return False
 
 def check_operations():
-    global final_score
     print("\n--- Checking Part 1: File System Operations (inside Docker) ---")
 
-    if run_docker_command(["test", "-d", "/challenge"], check_return_code=True):
-        results.append({"name": "Directory Creation", "passed": True, "points": TESTS['Directory Creation']})
-        final_score += TESTS['Directory Creation']
-        print("✓ Passed: Directory Creation")
-    else:
-        results.append({"name": "Directory Creation", "passed": False, "points": 0})
-        print("✗ Failed: Directory Creation")
+    dir_created = run_docker_command(["test", "-d", "/challenge"], check_return_code=True)
+    check_test("Directory Creation", dir_created, TESTS['Directory Creation'])
 
-    if run_docker_command(["test", "-f", "/challenge/data.txt"], check_return_code=True):
-        results.append({"name": "File Creation", "passed": True, "points": TESTS['File Creation']})
-        final_score += TESTS['File Creation']
-        print("✓ Passed: File Creation")
-    else:
-        results.append({"name": "File Creation", "passed": False, "points": 0})
-        print("✗ Failed: File Creation")
+    file_created = run_docker_command(["test", "-f", "/challenge/data.txt"], check_return_code=True)
+    check_test("File Creation", file_created, TESTS['File Creation'])
 
     content_output = run_docker_command(["cat", "/challenge/data.txt"])
-    if content_output == "Docker is awesome!":
-        results.append({"name": "File Content", "passed": True, "points": TESTS['File Content']})
-        final_score += TESTS['File Content']
-        print("✓ Passed: File Content")
-    else:
-        results.append({"name": "File Content", "passed": False, "points": 0})
-        print("✗ Failed: File Content")
+    content_correct = (content_output == "Docker is awesome!")
+    check_test("File Content", content_correct, TESTS['File Content'])
 
     copy_output = run_docker_command(["cat", "/opt/challenge/data.txt"])
-    if copy_output == "Docker is awesome!":
-        results.append({"name": "Directory Copy", "passed": True, "points": TESTS['Directory Copy']})
-        final_score += TESTS['Directory Copy']
-        print("✓ Passed: Directory Copy")
-    else:
-        results.append({"name": "Directory Copy", "passed": False, "points": 0})
-        print("✗ Failed: Directory Copy")
+    copy_correct = (copy_output == "Docker is awesome!")
+    check_test("Directory Copy", copy_correct, TESTS['Directory Copy'])
 
-# --- Part 2: QMD Quiz Functions ---
 def get_quiz_questions():
     try:
         json_bytes = base64.b64decode(quiz_data.ENCODED_DATA)
@@ -168,14 +171,19 @@ def run_quiz(questions):
     results.append({
         "name": f"Quiz ({correct_count}/{len(questions)} correct)",
         "passed": True,
-        "points": quiz_score
+        "points": TOTAL_QUIZ_SCORE,
+        "earned_score": quiz_score
     })
+
     print(f"\n--- Quiz Finished ---")
     print(f"You answered {correct_count} out of {len(questions)} questions correctly.")
 
 def encrypt_and_save_report():
-    app_dir = os.path.dirname(os.path.realpath(sys.executable))
-    report_file_path = os.path.join(app_dir, "autograding_report.json")
+    if getattr(sys, 'frozen', False):
+        task_dir_for_report = os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        task_dir_for_report = os.path.dirname(os.path.abspath(__file__))
+    report_file_path = os.path.join(task_dir_for_report, "autograding_report.json")
 
     final_results_data = {
         "score": final_score,
@@ -210,7 +218,7 @@ if __name__ == "__main__":
         run_quiz(quiz_questions)
     else:
         print("Error: Embedded quiz could not be loaded. Skipping quiz.")
-        results.append({"name": "Quiz", "passed": False, "points": 0})
+        results.append({"name": "Quiz", "passed": False, "points": TOTAL_QUIZ_SCORE, "earned_score": 0})
 
     print_final_report()
     encrypt_and_save_report()

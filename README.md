@@ -162,6 +162,8 @@ git config --list
 
 * Task 3: 基础的 Linux 操作: <https://classroom.github.com/a/_lPiEmCd>
 
+* Task 4: Makefile: <https://classroom.github.com/a/kQFePCsk>
+
 以 **Task 1: 配置运行环境** 为例子, 下面展示如何提交评测报告.
 
 在每一个任务点结束之后, 都会在`task'n'`目录下生成一个加密过的评测报告 (`n`为任务的序号, 请根据实际情况调整, 以下均以`n==1`为例). 假设你的报告位于`~/interview-autograding/tasks/taskn/autograding_report.json`, 并且你已经创建了一个`~/xxx-tasks`的文件夹用于保存你不同任务的报告 (xxx是你的 GitHub 的用户名).

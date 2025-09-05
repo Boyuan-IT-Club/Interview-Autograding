@@ -54,6 +54,10 @@ def run_command(command, cwd=TASK_DIR):
         return False, "", str(e)
 
 def check_test(name, passed, points):
+    """
+    最小化保留格式，与 task2 一致：
+    results 中只包含 name / passed / points（points 表示已得分）
+    """
     global final_score
     status = "✓ Passed" if passed else "✗ Failed"
     print(f"  - {name}: {status}")

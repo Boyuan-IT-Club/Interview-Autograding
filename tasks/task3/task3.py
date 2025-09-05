@@ -62,12 +62,7 @@ def print_final_report():
     print("Results for Linux Challenge:")
     for result in results:
         status = '✓ Passed' if result.get('passed', False) else '✗ Failed'
-
-        if 'earned_score' in result:
-            earned_points = result['earned_score']
-        else:
-            earned_points = result.get('points', 0) if result.get('passed', False) else 0
-
+        earned_points = result.get('points', 0) if result.get('passed', False) else 0
         points_str = f"+{earned_points}pts"
         print(f"  - {result['name']}: {status} ({points_str})")
 
@@ -141,22 +136,30 @@ def get_quiz_questions():
         return None
 
 def run_quiz(questions):
-    global final_score
     print("\n--- Starting Part 2: Multiple Choice Quiz ---")
 
-    correct_count = 0
+    if not questions:
+        print("No quiz questions found to run.")
+        return
+
+    num_questions = len(questions)
+    base_points = TOTAL_QUIZ_SCORE // num_questions
+    remainder = TOTAL_QUIZ_SCORE % num_questions
+    points_per_question = [base_points] * num_questions
+    for i in range(remainder):
+        points_per_question[i] += 1
+
     for i, q in enumerate(questions):
         print(f"\nQuestion {i+1}/{len(questions)}: {q['question']}")
         sorted_options = sorted(q['options'].items())
         for letter, text in sorted_options:
             print(f"  {letter}. {text}")
 
+        user_input = ""
         while True:
             try:
                 user_input = input("Your choice (A/B/C/D): ").upper().strip()
                 if user_input in q['options']:
-                    if user_input == q['answer']:
-                        correct_count += 1
                     break
                 else:
                     print("Invalid input. Please enter A, B, C, or D.")
@@ -164,19 +167,11 @@ def run_quiz(questions):
                 print("\nQuiz aborted. Exiting.")
                 sys.exit(0)
 
-    score_per_question = TOTAL_QUIZ_SCORE / len(questions)
-    quiz_score = round(correct_count * score_per_question)
-    final_score += quiz_score
-
-    results.append({
-        "name": f"Quiz ({correct_count}/{len(questions)} correct)",
-        "passed": True,
-        "points": TOTAL_QUIZ_SCORE,
-        "earned_score": quiz_score
-    })
+        is_correct = (user_input == q['answer'])
+        test_name = f"Quiz Question {i+1}"
+        check_test(test_name, is_correct, points_per_question[i])
 
     print(f"\n--- Quiz Finished ---")
-    print(f"You answered {correct_count} out of {len(questions)} questions correctly.")
 
 def encrypt_and_save_report():
     if getattr(sys, 'frozen', False):
@@ -218,7 +213,7 @@ if __name__ == "__main__":
         run_quiz(quiz_questions)
     else:
         print("Error: Embedded quiz could not be loaded. Skipping quiz.")
-        results.append({"name": "Quiz", "passed": False, "points": TOTAL_QUIZ_SCORE, "earned_score": 0})
+        results.append({"name": "Quiz Loading", "passed": False, "points": TOTAL_QUIZ_SCORE})
 
     print_final_report()
     encrypt_and_save_report()

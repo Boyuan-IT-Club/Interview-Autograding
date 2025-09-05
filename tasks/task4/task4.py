@@ -54,6 +54,10 @@ def run_command(command, cwd=TASK_DIR):
         return False, "", str(e)
 
 def check_test(name, passed, points):
+    """
+    最小化保留格式，与 task2 一致：
+    results 中只包含 name / passed / points（points 表示已得分）
+    """
     global final_score
     status = "✓ Passed" if passed else "✗ Failed"
     print(f"  - {name}: {status}")
@@ -66,8 +70,7 @@ def print_final_report():
     print("Results for Makefile Automation Challenge:")
     for result in results:
         status = '✓ Passed' if result['passed'] else '✗ Failed'
-        points_str = f"+{result['points']}pts"
-        print(f"  - {result['name']}: {status} ({points_str})")
+        print(f"  - {result['name']}: {status} (+{result['points']}pts)")
     print(f"\nFinal Score: {final_score}/{sum(TESTS.values())} (Correctness)")
     print("----------------------------------\n")
 

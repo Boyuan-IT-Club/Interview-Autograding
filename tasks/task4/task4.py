@@ -63,14 +63,21 @@ def check_test(name, passed, points):
     print(f"  - {name}: {status}")
     if passed:
         final_score += points
-    results.append({"name": name, "passed": passed, "points": points if passed else 0})
+
+    results.append({
+        "name": name,
+        "passed": passed,
+        "points": points
+    })
 
 def print_final_report():
     print("\n--- AUTOGRADING FINAL REPORT ---")
     print("Results for Makefile Automation Challenge:")
     for result in results:
         status = '✓ Passed' if result['passed'] else '✗ Failed'
-        print(f"  - {result['name']}: {status} (+{result['points']}pts)")
+        earned_points = result['points'] if result['passed'] else 0
+        points_str = f"+{earned_points}pts"
+        print(f"  - {result['name']}: {status} ({points_str})")
     print(f"\nFinal Score: {final_score}/{sum(TESTS.values())} (Correctness)")
     print("----------------------------------\n")
 

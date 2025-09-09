@@ -80,35 +80,49 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-pack
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist/all
-
+          merge-multiple: false
+          
       - name: Determine next version
         id: version
         shell: bash
         run: |
           git fetch --tags origin
-          latest=$(git tag -l "v*" --sort=-v:refname | head -n1)
+          latest=$(git tag -l "v*" --sort=-v:refname | head -n1 || true)
           if [ -z "$latest" ]; then
             version="1.0.0"
           else
-            major=$(echo $latest | cut -d. -f1 | tr -d 'v')
-            minor=$(echo $latest | cut -d. -f2)
-            patch=$(echo $latest | cut -d. -f3)
+            major=$(echo "$latest" | cut -d. -f1 | tr -d 'v')
+            minor=$(echo "$latest" | cut -d. -f2)
+            patch=$(echo "$latest" | cut -d. -f3)
             patch=$((patch + 1))
             version="$major.$minor.$patch"
           fi
-          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Next version: $version"
+
+      - name: List artifacts
+        run: |
+          echo "Artifacts tree:"
+          ls -R dist/all || true
+          files=$(ls dist/all/**/auto-grading-*.tar.gz 2>/dev/null | wc -l)
+          if [ "$files" -lt 1 ]; then
+            echo "No packaging artifacts found!"; exit 1
+          fi
 
       - name: Create Release with gh CLI
         run: |
-          ls -R dist/all
-          gh release create v${{ steps.version.outputs.version }} \
+          gh release create "v${{ steps.version.outputs.version }}" \
             dist/all/**/auto-grading-*.tar.gz \
             --title "Release v${{ steps.version.outputs.version }}" \
-            --notes "Release version v${{ steps.version.outputs.version}} (Linux & macOS) built on $(date +"%Y-%m-%d %H:%M:%S")"
+            --notes "Release version v${{ steps.version.outputs.version }} (Linux & macOS) built on $(date +"%Y-%m-%d %H:%M:%S")"
         env:
           GH_TOKEN: ${{ secrets.REPO_TOKEN }}

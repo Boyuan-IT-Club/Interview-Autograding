@@ -5,99 +5,110 @@ on:
     branches: [main]
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest
+  build-and-pack:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
-    # 1. 检出代码
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # 2. 设置 Python
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    # 3. 安装 PyInstaller 和依赖
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller pycryptodome
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pycryptodome
 
-    # 4. 设置 pack.sh 可执行权限
-    - name: Set execute permission for pack.sh
-      run: chmod +x ./util/pack.sh
+      - name: Make pack.sh executable
+        run: chmod +x ./util/pack.sh
+        
+      - name: Compile grade.py
+        run: ./util/pack.sh ./tasks/grade.py
+        
+      - name: Compile taskN scripts
+        shell: bash
+        run: |
+          set -e
+          for task_dir in ./tasks/task*/; do
+            task_file="${task_dir%/}/$(basename ${task_dir%/}).py"
+            if [ -f "$task_file" ]; then
+              echo "Packing $task_file..."
+              ./util/pack.sh "$task_file"
+            fi
+          done
 
-    # 5. 编译 grade.py
-    - name: Compile grade.py
-      run: ./util/pack.sh ./tasks/grade.py
-
-    # 6. 编译 taskN 脚本
-    - name: Compile taskN scripts
-      run: |
-        for task_dir in ./tasks/task*/; do
-          task_file="${task_dir%/}/$(basename ${task_dir%/}).py"
-          if [ -f "$task_file" ]; then
-            echo "Packing $task_file..."
-            ./util/pack.sh "$task_file"
+      - name: Set platform name
+        id: platform
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            echo "PLATFORM=linux" >> $GITHUB_ENV
+          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            echo "PLATFORM=macos" >> $GITHUB_ENV
+          else
+            echo "Unsupported matrix.os"; exit 1
           fi
-        done
 
-    # 7. 生成下一个版本号（确保自增，不会重复）
-    - name: Determine next version
-      id: version
-      run: |
-        git fetch --tags origin
-        latest=$(git tag -l "v*" --sort=-v:refname | head -n1)
-        if [ -z "$latest" ]; then
-          version="1.0.0"
-        else
-          major=$(echo $latest | cut -d. -f1 | tr -d 'v')
-          minor=$(echo $latest | cut -d. -f2)
-          patch=$(echo $latest | cut -d. -f3)
-          patch=$((patch + 1))
-          version="$major.$minor.$patch"
-        fi
-        echo "version=$version" >> $GITHUB_OUTPUT
-        echo "Next version: $version"
+      - name: Prepare platform package
+        shell: bash
+        run: |
+          set -e
+          mkdir -p dist/package-$PLATFORM/tasks
+          rsync -av --exclude='*.py' ./tasks/ dist/package-$PLATFORM/tasks/
+          if [ ! -x dist/package-$PLATFORM/tasks/grade ] && [ -f dist/grade ]; then
+            cp dist/grade dist/package-$PLATFORM/tasks/grade
+            chmod +x dist/package-$PLATFORM/tasks/grade
+          fi
+          if [ -d ./etc ]; then
+            cp -a ./etc dist/package-$PLATFORM/
+          fi
+          find dist/package-$PLATFORM -type f -exec chmod +x {} \; || true
+          tar -C dist/package-$PLATFORM -czvf dist/auto-grading-$PLATFORM.tar.gz .
+      - name: Upload platform artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-grading-${{ env.PLATFORM }}
+          path: dist/auto-grading-${{ env.PLATFORM }}.tar.gz
 
-    # 8. 准备 tar 包（保留 tasks 和 etc 同级，排除 .py 文件）
-    - name: Prepare tar package
-      run: |
-        # 确保目标目录存在
-        mkdir -p dist/package
+  release:
+    runs-on: ubuntu-latest
+    needs: build-and-pack
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/all
 
-        # 拷贝整个 tasks 文件夹
-        if [ -d "./tasks" ]; then
-          mkdir -p dist/package/tasks
-          rsync -av --exclude='*.py' ./tasks/ dist/package/tasks/
-        else
-          echo "Error: ./tasks folder not found!"
-          exit 1
-        fi
+      - name: Determine next version
+        id: version
+        shell: bash
+        run: |
+          git fetch --tags origin
+          latest=$(git tag -l "v*" --sort=-v:refname | head -n1)
+          if [ -z "$latest" ]; then
+            version="1.0.0"
+          else
+            major=$(echo $latest | cut -d. -f1 | tr -d 'v')
+            minor=$(echo $latest | cut -d. -f2)
+            patch=$(echo $latest | cut -d. -f3)
+            patch=$((patch + 1))
+            version="$major.$minor.$patch"
+          fi
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Next version: $version"
 
-        # 拷贝整个 etc 文件夹
-        if [ -d "./etc" ]; then
-          cp -r ./etc dist/package/
-        else
-          echo "Warning: ./etc folder not found. Skipping."
-        fi
-
-        # 给所有可执行文件加权限
-        find dist/package -type f -executable -exec chmod +x {} \;
-
-        # 打包 tasks 和 etc
-        cd dist/package
-        tar -cvf ../interview-autograding.tar *
-        cd -
-
-    # 9. 创建 GitHub Release
-    - name: Create Release with gh CLI
-      run: |
-        gh release create v${{ steps.version.outputs.version }} \
-        dist/interview-autograding.tar \
-        --title "Release v${{ steps.version.outputs.version }}" \
-        --notes "Release version v${{ steps.version.outputs.version}} generated on $(date +"%Y-%m-%d %H:%M:%S")"
-      env:
-        GH_TOKEN: ${{ secrets.REPO_TOKEN }}
+      - name: Create Release with gh CLI
+        run: |
+          ls -R dist/all
+          gh release create v${{ steps.version.outputs.version }} \
+            dist/all/**/auto-grading-*.tar.gz \
+            --title "Release v${{ steps.version.outputs.version }}" \
+            --notes "Release version v${{ steps.version.outputs.version}} (Linux & macOS) built on $(date +"%Y-%m-%d %H:%M:%S")"
+        env:
+          GH_TOKEN: ${{ secrets.REPO_TOKEN }}

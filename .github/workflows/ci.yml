@@ -59,17 +59,24 @@ jobs:
         shell: bash
         run: |
           set -e
-          mkdir -p dist/package-$PLATFORM/tasks
-          rsync -av --exclude='*.py' ./tasks/ dist/package-$PLATFORM/tasks/
+          mkdir -p dist/package-$PLATFORM
+          cp -a ./tasks dist/package-$PLATFORM/
+          # FIXME: dirty fix, rsync 应该可以 exclude, 但先这样修了
+          find dist/package-$PLATFORM/tasks -type f -name '*.py' ! -path '*/task4/tool/main.py' -delete
+
           if [ ! -x dist/package-$PLATFORM/tasks/grade ] && [ -f dist/grade ]; then
             cp dist/grade dist/package-$PLATFORM/tasks/grade
             chmod +x dist/package-$PLATFORM/tasks/grade
           fi
+
           if [ -d ./etc ]; then
             cp -a ./etc dist/package-$PLATFORM/
           fi
-          find dist/package-$PLATFORM -type f -exec chmod +x {} \; || true
+
+          chmod +x dist/package-$PLATFORM/tasks/task4/tool/main.py || true
+          find dist/package-$PLATFORM -type f -executable -exec chmod +x {} \; || true
           tar -C dist/package-$PLATFORM -czvf dist/auto-grading-$PLATFORM.tar.gz .
+          
       - name: Upload platform artifact
         uses: actions/upload-artifact@v4
         with:

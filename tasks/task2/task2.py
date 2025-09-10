@@ -3,6 +3,7 @@ import sys
 import os
 import json
 import base64
+import platform
 from base64 import b64encode
 from Crypto.Cipher import AES
 
@@ -43,7 +44,8 @@ def print_final_report():
     print("Results for Docker environment check:")
     for result in results:
         status = '✓ Passed' if result['passed'] else '✗ Failed'
-        print(f"  - {result['name']}: {status} (+{result['points']}pts)")
+        max_pts = result.get('max_points', result['points'])
+        print(f"  - {result['name']}: {status} (+{result['points']}/{max_pts}pts)")
     print(f"\nFinal Score: {score}/{sum(TESTS.values())} (Correctness)")
     print("----------------------------------\n")
 
@@ -54,10 +56,20 @@ def run_check(name, check_func, points):
 
     if result:
         score += points
-        results.append({"name": name, "passed": True, "points": points})
+        results.append({
+            "name": name,
+            "passed": True,
+            "points": points,
+            "max_points": points,
+        })
         print(f"✓ {name}: Passed")
     else:
-        results.append({"name": name, "passed": False, "points": 0})
+        results.append({
+            "name": name,
+            "passed": False,
+            "points": 0,
+            "max_points": points,
+        })
         print(f"✗ {name}: Failed")
 
     return result
@@ -87,18 +99,35 @@ def check_docker_service_running():
 
 def check_user_permissions():
     print("  - Verifying user permissions (no sudo required)...")
-    try:
-        user_groups = subprocess.check_output(['groups'], text=True).strip()
-        if 'docker' in user_groups.split():
-            print("  - Passed: User is correctly configured in the 'docker' group.")
-            return True
-        else:
-            print("  - Failed: User is not in the 'docker' group.")
-            print("  - Tip: Run 'sudo usermod -aG docker $USER' and then RE-OPEN your terminal.")
+    system = platform.system()
+
+    if system == "Darwin":
+        print("  - Skipped: macOS does not use 'docker' group. Assuming permissions are OK.")
+        return True
+
+    elif system == "Linux":
+        try:
+            user_groups = subprocess.check_output(['groups'], text=True).strip()
+            if 'docker' in user_groups.split():
+                print("  - Passed: User is correctly configured in the 'docker' group.")
+                return True
+            else:
+                print("  - Failed: User is not in the 'docker' group.")
+                print("  - Tip: Run 'sudo usermod -aG docker $USER' and then RE-OPEN your terminal.")
+                return False
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("  - Failed: Could not determine user groups.")
             return False
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print("  - Failed: Could not determine user groups.")
-        return False
+
+    else:
+        try:
+            subprocess.run(['docker', 'ps'], check=True, text=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print(f"  - Passed: On {system}, Docker runs without elevated privileges.")
+            return True
+        except Exception:
+            print(f"  - Failed: On {system}, unable to run 'docker' without elevated privileges.")
+            return False
 
 def check_container_execution():
     print("  - Verifying container execution with 'hello-world'...")
@@ -115,7 +144,6 @@ def check_container_execution():
         print(f"  - Error details: {e.output}")
         return False
     except FileNotFoundError:
-        # 理论上不可能执行到这里，仅作为保险
         print("  - Failed: 'docker' command not found.")
         return False
 
@@ -164,16 +192,46 @@ if __name__ == "__main__":
             if permissions_ok:
                 run_check('Container Execution Check', check_container_execution, TESTS['Container Execution Check'])
             else:
-                results.append({"name": "Container Execution Check", "passed": False, "points": 0})
+                results.append({
+                    "name": "Container Execution Check",
+                    "passed": False,
+                    "points": 0,
+                    "max_points": TESTS["Container Execution Check"],
+                })
                 print("✗ Skipping Container Execution Check due to user permission issues.")
         else:
-            results.append({"name": "User Permissions Check", "passed": False, "points": 0})
-            results.append({"name": "Container Execution Check", "passed": False, "points": 0})
+            results.append({
+                "name": "User Permissions Check",
+                "passed": False,
+                "points": 0,
+                "max_points": TESTS["User Permissions Check"],
+            })
+            results.append({
+                "name": "Container Execution Check",
+                "passed": False,
+                "points": 0,
+                "max_points": TESTS["Container Execution Check"],
+            })
             print("✗ Skipping subsequent checks as Docker service is not running.")
     else:
-        results.append({"name": "Docker Service Running Check", "passed": False, "points": 0})
-        results.append({"name": "User Permissions Check", "passed": False, "points": 0})
-        results.append({"name": "Container Execution Check", "passed": False, "points": 0})
+        results.append({
+            "name": "Docker Service Running Check",
+            "passed": False,
+            "points": 0,
+            "max_points": TESTS["Docker Service Running Check"],
+        })
+        results.append({
+            "name": "User Permissions Check",
+            "passed": False,
+            "points": 0,
+            "max_points": TESTS["User Permissions Check"],
+        })
+        results.append({
+            "name": "Container Execution Check",
+            "passed": False,
+            "points": 0,
+            "max_points": TESTS["Container Execution Check"],
+        })
         print("\n--- Fundamental Check Failed ---")
         print("Docker command not found. Please install Docker before proceeding.")
         print("----------------------------------\n")

@@ -10,15 +10,15 @@
 1. 下载到当前目录：
 
     ```bash
-    wget -O interview-autograding.tar \
-    "https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/latest/download/interview-autograding.tar"
+    wget -O interview-autograding.tar.gz \
+    "https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/download/v1.0.17/auto-grading-linux.tar.gz"
     ```
 
 2. 解压到当前目录：
 
     ```bash
     mkdir -p interview-autograding
-    tar -xf interview-autograding.tar -C ./interview-autograding
+    tar -xf interview-autograding.tar.gz -C ./interview-autograding
     ```
 
 3. 开始评测：
@@ -136,7 +136,7 @@ git config --list
 
 4. 添加到 GitHub
 
-   * GitHub: [SSH Keys 页面](https://github.com/settings/keys) → New SSH Key → 粘贴 → Add SSH key
+   * GitHub: [SSH Keys 页面](https://github.com/settings/keys) → New SSH Key → 粘贴 → Add SSH key3,553 −29
 
 5. 测试连接
 

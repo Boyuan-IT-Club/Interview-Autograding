@@ -11,7 +11,7 @@
 
     ```bash
     wget -O interview-autograding.tar.gz \
-    "https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/download/v1.0.17/auto-grading-linux.tar.gz"
+    "https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/download/v1.0.18/auto-grading-linux.tar.gz"
     ```
 
 2. 解压到当前目录：
@@ -25,7 +25,7 @@
 
     ```bash
     cd interview-autograding
-    ./grade
+    ./tasks/grade
     ```
 
 ---

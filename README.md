@@ -2,16 +2,18 @@
 
 > 使用该评测前必读!!! 请你严格按照如下规定进行评测, 否则可能会出现无法预料的问题.
 
+> 欢迎朋友们观看[博远信息工作室](https://space.bilibili.com/695281681)的[《计算机教育中缺失的学期》](https://www.bilibili.com/video/BV1JkzGYuEGo)！
+
 ## 解压打包程序
 
 > 请先确保你完成了 **Task 1: 配置运行环境** 的 **第一个任务点: Environment Check** 再进行以下操作, 因为以下操作需要你在 Linux 环境下完成, 请勿在 Windows 下直接操作. 注意: 安装好 Linux 环境之后就能下载本评测程序, 继续后续的测试. 若有不解之处, 请先参阅 `/tasks/task1/README.md`.
-> 若使用的是 **macOS**, 请你自行下载[评测程序](https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/latest/download/interview-autograding.tar), 解压到你认为合适的位置, 打开终端. 就可以直接执行`./grade`.
+> 若使用的是 **macOS**, 请你自行下载[评测程序](https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/latest/download/auto-grading-macos.tar.gz), 解压到你认为合适的位置, 打开终端. 就可以直接执行`./grade`.
 
 1. 下载到当前目录：
 
     ```bash
     wget -O interview-autograding.tar.gz \
-    "https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/download/v1.0.18/auto-grading-linux.tar.gz"
+    "https://github.com/Boyuan-IT-Club/Interview-Autograding/releases/latest/download/auto-grading-linux.tar.gz"
     ```
 
 2. 解压到当前目录：
